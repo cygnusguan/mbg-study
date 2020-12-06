@@ -3,6 +3,7 @@ package example.mapper;
 import static example.mapper.EmployeeDynamicSqlSupport.*;
 import static org.mybatis.dynamic.sql.SqlBuilder.*;
 
+import example.ResultCountWrapper;
 import example.model.Employee;
 import java.util.Collection;
 import java.util.List;
@@ -13,10 +14,12 @@ import org.apache.ibatis.annotations.*;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.type.JdbcType;
 import org.mybatis.dynamic.sql.BasicColumn;
+import org.mybatis.dynamic.sql.SqlBuilder;
 import org.mybatis.dynamic.sql.delete.DeleteDSLCompleter;
 import org.mybatis.dynamic.sql.delete.render.DeleteStatementProvider;
 import org.mybatis.dynamic.sql.insert.render.InsertStatementProvider;
 import org.mybatis.dynamic.sql.insert.render.MultiRowInsertStatementProvider;
+import org.mybatis.dynamic.sql.render.RenderingStrategies;
 import org.mybatis.dynamic.sql.select.CountDSLCompleter;
 import org.mybatis.dynamic.sql.select.SelectDSLCompleter;
 import org.mybatis.dynamic.sql.select.aggregate.Count;
@@ -137,9 +140,10 @@ public interface EmployeeMapper {
         return MyBatis3Utils.selectList(this::selectMany, selectList, employee, completer);
     }
 
-    default List<Employee> select(SelectDSLCompleter completer, RowBounds rb,Main.MyFunction mm) {
-        mm.apply(completer,rb);
-        return MyBatis3Utils.selectList(this::selectMany, selectList, employee, completer);
+    default List<Employee> select(ResultCountWrapper.SelectDSLCompleterExt completer, RowBounds rb) {
+
+        return selectMany(completer.apply(SqlBuilder.select(selectList).from(employee),rb).
+                build().render(RenderingStrategies.MYBATIS3));
     }
 
 

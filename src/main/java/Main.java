@@ -4,12 +4,12 @@ import static example.mapper.CompanyDynamicSqlSupport.*;
 
 import static org.mybatis.dynamic.sql.SqlBuilder.*;
 
+import example.ResultCountWrapper;
 import example.mapper.CompanyDynamicSqlSupport;
 import example.mapper.EmployeeDynamicSqlSupport;
 import example.mapper.EmployeeMapper;
 import example.mapper.MyMapper;
 import example.model.Employee;
-import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
@@ -17,11 +17,9 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.mybatis.dynamic.sql.SqlCriterion;
 import org.mybatis.dynamic.sql.render.RenderingStrategies;
-import org.mybatis.dynamic.sql.render.RenderingStrategy;
 import org.mybatis.dynamic.sql.select.*;
 import org.mybatis.dynamic.sql.select.aggregate.Count;
 import org.mybatis.dynamic.sql.select.render.SelectStatementProvider;
-import org.mybatis.dynamic.sql.util.Buildable;
 import org.mybatis.dynamic.sql.where.WhereModel;
 
 import java.io.IOException;
@@ -30,7 +28,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -72,20 +69,29 @@ public class Main {
                 .withPagingModel(new PagingModel.Builder().withLimit(1L).withOffset(1L).build())
                 .build().render(RenderingStrategies.MYBATIS3);
 
-        SelectDSLCompleter s1 = c -> c
+        ResultCountWrapper.SelectDSLCompleterExt s1 = (c, r) ->
+        {
+            QueryExpressionDSL.QueryExpressionWhereBuilder b=c
                 .leftJoin(company).on(companyId,equalTo(CompanyDynamicSqlSupport.id))
                 .where(lastName,isNotNull())
-                .and(firstName,isNotEqualTo("a"))
-                ;
+                .and(firstName,isNotEqualTo("a"));
+            if (r != null){
+                b.limit(r.getLimit()).offset(r.getOffset());
+            }
+        return b;
+        };
+
 
         RowBounds rows = new RowBounds(1,1);
-        MyFunction mm = (a,b) -> a..limit(b.getLimit()).offset(b.getOffset());
-        List<Employee> result = mapper.select(s1,rows,mm);
+
+        //ext.apply(s1,rows);
+
+
+        //MyFunction mm = (a,b) -> a.limit(b.getLimit()).offset(b.getOffset());
+        List<Employee> result = mapper.select(s1,rows);
 
 
 
-        long count = mapper.selectCount(s1);
-        System.out.println("LOng count is : " + count);
 
 
 

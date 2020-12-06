@@ -1,6 +1,12 @@
 package example;
 
+import org.apache.ibatis.session.RowBounds;
+import org.mybatis.dynamic.sql.select.QueryExpressionDSL;
+import org.mybatis.dynamic.sql.select.SelectModel;
+import org.mybatis.dynamic.sql.util.Buildable;
+
 import java.util.List;
+import java.util.function.BiFunction;
 
 
 public class ResultCountWrapper<T> {
@@ -15,5 +21,8 @@ public class ResultCountWrapper<T> {
     }
 
 
+    public static interface SelectDSLCompleterExt
+            extends BiFunction<QueryExpressionDSL<SelectModel>, RowBounds, Buildable<SelectModel>> {
 
+    }
 }
